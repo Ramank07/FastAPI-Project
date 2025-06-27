@@ -22,9 +22,9 @@ def get_post(db: Session= Depends(get_db)):
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=schemas.Postresponse)
 def create_post(post:schemas.UserPost,db: Session= Depends(get_db)):
-    find_user=db.query(models.Post).filter(models.Post.email==post.email).first()
-    if find_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User Already exist of {post.email} email")
+    # find_user=db.query(models.Post).filter(models.Post.email==post.email).first()
+    # if find_user:
+    #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User Already exist of {post.email} email")
     new_post=models.Post(**post.dict())
     db.add(new_post)
     db.commit()
@@ -35,9 +35,9 @@ def create_post(post:schemas.UserPost,db: Session= Depends(get_db)):
 
 # Get one particular user by passing emai as Path parameter
 
-@router.get('/{email}',response_model=schemas.Postresponse)
+@router.get('/{email}',response_model=List[schemas.Postresponse])
 def get_one_detail(email:str, db: Session=Depends(get_db)):
-    single_detail=db.query(models.Post).filter(models.Post.email==email).first()
+    single_detail=db.query(models.Post).filter(models.Post.email==email).all()
     if not single_detail :
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"No user found of email: {email}")
     return single_detail
@@ -46,12 +46,12 @@ def get_one_detail(email:str, db: Session=Depends(get_db)):
 
 # update one user by passing email in path parameter
 
-@router.put('/{email}',response_model=schemas.UpdatePostResponse)
-def update_post(email:str,updated_detail:schemas.UpdatePost, db: Session=Depends(get_db)):
-    find_user=db.query(models.Post).filter(models.Post.email==email)
+@router.put('/{id}',response_model=schemas.UpdatePostResponse)
+def update_post(id:int,updated_detail:schemas.UpdatePost, db: Session=Depends(get_db)):
+    find_user=db.query(models.Post).filter(models.Post.id==id)
     updated_post=find_user.first()
     if not updated_post:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"No user found of email: {email}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"No user found of id: {id}")
     find_user.update(updated_detail.dict(),synchronize_session=False)
     db.commit()
     return find_user.first()
@@ -60,13 +60,13 @@ def update_post(email:str,updated_detail:schemas.UpdatePost, db: Session=Depends
 
 # Deleting one particular user by passing email in path parameter
 
-@router.delete('/{email}',response_model=schemas.Postresponse)
-def delete_post(email:str, db:Session=Depends(get_db)):
-    post=db.query(models.Post).filter(models.Post.email==email)
+@router.delete('/{id}',response_model=schemas.Postresponse)
+def delete_post(id:int, db:Session=Depends(get_db)):
+    post=db.query(models.Post).filter(models.Post.id==id)
 
     if post.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f'item {email} already deleted or not found')
+                            detail=f'item {id} already deleted or not found')
     
 
     post.delete(synchronize_session=False)
